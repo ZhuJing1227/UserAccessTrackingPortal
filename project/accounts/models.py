@@ -1,54 +1,78 @@
 from operator import mod
+from tkinter import CASCADE
+from xml.etree.ElementInclude import DEFAULT_MAX_INCLUSION_DEPTH
 from django.db import models
+from django.forms import CharField
 from django.test import tag
 
-# Create your models here.
+#employee table
+class employee(models.Model):
+	employeeName = models.CharField(max_length=100, null=True)
+	employeeEmail = models.CharField(max_length=100, null=True)
+	employeePassword = models.CharField(max_length=100, null=True)
 
-class Customer(models.Model):
-	name = models.CharField(max_length=200, null=True)
-	phone = models.CharField(max_length=200, null=True)
-	email = models.CharField(max_length=200, null=True)
-	date_created = models.DateTimeField(auto_now_add=True, null=True)
+	#account level
+	admin = 'admin'
+	user = 'user'
+	employee = 'employee'
+	dimission = 'dimission'
 
+	ACCOUNT_LEVEL_CHOICE = [
+		(admin,'admin'),
+		(user,'user'),
+		(employee,'employee'),
+		(dimission,'dimission'),
+	]
+	accountLevel = models.CharField(
+		max_length = 10,
+		choices = ACCOUNT_LEVEL_CHOICE,
+		default = employee
+	)
+
+	#department
+	IT = 'IT'
+	HR = 'HR'
+	EMPLOYEE_DEPARTMENT_CHOICE = [
+		(IT,'Information Technology'),
+		(HR,'Human Resources'),
+	]
+	employeeDepartment = models.CharField(
+		max_length = 10,
+		choices = EMPLOYEE_DEPARTMENT_CHOICE,
+		default = IT
+	)
+
+	employeeNotes = models.CharField(max_length=1000, null=True, blank=True)
 
 	def __str__(self):
-		return self.name
+		return str(self.employeeName)
 
-
-
-class Tag(models.Model):
-	name = models.CharField(max_length=200, null=True)
-
-	def __str__(self):
-		return self.name
-
-
-class Product(models.Model):
-	CATEGORY = (
-			('Indoor', 'Indoor'),
-			('Out Door', 'Out Door'),
-			) 
-
-	name = models.CharField(max_length=200, null=True)
-	price = models.FloatField(null=True)
-	category = models.CharField(max_length=200, null=True, choices=CATEGORY)
-	description = models.CharField(max_length=200, null=True, blank=True)
-	date_created = models.DateTimeField(auto_now_add=True, null=True)
-	tags = models.ManyToManyField(Tag)
+#access table
+class access(models.Model):
+	accessName = models.CharField(max_length=100, null=True)
+	grantTo = models.ManyToManyField(employee, through='Grant')
+	notes = models.CharField(max_length=100, null=True,blank=True)
+	
 
 	def __str__(self):
-		return self.name
+		return str(self.accessName)
 
-class Order(models.Model):
-	STATUS = (
-			('Pending', 'Pending'),
-			('Out for delivery', 'Out for delivery'),
-			('Delivered', 'Delivered'),
-			)
+#history table
+class history(models.Model):
+	accessName = models.CharField(max_length= 100, null=True)
+	action = models.CharField(max_length= 100, null=True)
+	actTo = models.CharField(max_length= 100, null=True)
+	actBy = models.CharField(max_length= 100, null=True)
+	actionDate = models.DateField(auto_now=False,auto_now_add=False, null=True)
+	recordTime = models.DateTimeField(auto_now_add=True, null=True)
 
-	customer = models.ForeignKey(Customer, null=True, on_delete= models.SET_NULL)
-	product = models.ForeignKey(Product, null=True, on_delete= models.SET_NULL)
-	date_created = models.DateTimeField(auto_now_add=True, null=True)
-	status = models.CharField(max_length=200, null=True, choices=STATUS)
+	
+#middle table between employee and access
+class Grant(models.Model):
+	employee = models.ForeignKey(employee, on_delete=models.CASCADE)
+	access = models.ForeignKey(access, on_delete=models.CASCADE)
+	rights = models.CharField(max_length=10, null = True)
 
+	def __str__(self):
+		return str(self.employee)
 
